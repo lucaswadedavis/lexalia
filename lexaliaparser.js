@@ -1,5 +1,5 @@
 (function(){
-  
+  var compiledJS = "";
   var lexalia = {};
   
   function parseExpression(program) {
@@ -53,26 +53,115 @@
   function evaluate(expr, env) {
     switch(expr.type) {
       case "value":
+        //console.log(expr.value);
         return expr.value;
-  
       case "word":
-        if (expr.name in env)
+        if (expr.name in env){
+          //console.log(expr.name)
           return env[expr.name];
-        else
+        } else {
           throw new ReferenceError("Undefined variable: " + expr.name);
+        }
       case "apply":
         if (expr.operator.type == "word" &&
-            expr.operator.name in specialForms)
+            expr.operator.name in specialForms){
+          //console.log(specialForms[expr.operator.name](expr.args, env));
           return specialForms[expr.operator.name](expr.args, env);
+          }
         var op = evaluate(expr.operator, env);
         if (typeof op != "function")
           throw new TypeError("Applying a non-function.");
         return op.apply(null, expr.args.map(function(arg) {
+          //console.log(evaluate(arg,env));
           return evaluate(arg, env);
         }));
     }
   }
 
+  function compile(expr, env) {
+    switch(expr.type) {
+      case "value":
+        //console.log(expr.value);
+        compiledJS += JSON.stringify(expr.value);
+        return expr.value;
+      case "word":
+        if (expr.name in env){
+          //console.log(expr.name)
+          compiledJS += JSON.stringify(expr.name);
+          return env[expr.name];
+        } else {
+          throw new ReferenceError("Undefined variable: " + expr.name);
+        }
+      case "apply":
+        if (expr.operator.type == "word" &&
+            expr.operator.name in specialForms){
+          //console.log(specialForms[expr.operator.name](expr.args, env));
+          compiledJS += specialForms[expr.operator.name].compiledJS(expr.args,env);
+          return specialForms[expr.operator.name](expr.args, env);
+          }
+        var op = evaluate(expr.operator, env);
+        if (typeof op != "function")
+          throw new TypeError("Applying a non-function.");
+        return op.apply(null, expr.args.map(function(arg) {
+          //console.log(evaluate(arg,env));
+          return evaluate(arg, env);
+        }));
+    }
+  }
+ 
+  ////////////////////////////////////////////////////////
+ 
+  function run() {
+    var env = Object.create(topEnv);
+    var program = Array.prototype.slice
+      .call(arguments, 0).join("\n");
+    return evaluate(parse(program), env);
+  }    
+  
+  ////////////////////////////////////////////////////////
+
+  function js() {
+    var JS = "";
+    var env = Object.create(topEnv);
+    var program = Array.prototype.slice
+      .call(arguments, 0).join("\n");
+    //this next bit will change
+    var walk = function(node){
+      //base case 
+      if (!node.hasOwnProperty("args") ){
+        return;
+      }
+      
+      
+      if (node.hasOwnProperty("type") ){
+        if (node.type === "apply"){
+          //it's a function with arguments and stuff - recursion here
+          JS += node.operator.name;
+          JS += " ( ";
+          for (var i=0;i<node.args.length;i++){
+            //recurse
+            walk(node.args[i]);
+          }
+          JS += " ); \n";
+        } else if (node.type === "word"){
+          //it's a variable
+          JS += node.name;
+        } else if (node.type === "value"){
+          //it's a primitive
+          JS += node.value;
+        }
+      } else {
+        //some error
+        console.log("node has no property type");
+      }
+    };
+    
+    console.log(parse(program));
+    for (var key in env){JS += "var " + key + " = " + env[key] + ";\n";}
+    walk(parse(program));
+    return JS;
+  }    
+  
   ////////////////////////////////////////////////////////
   
   var specialForms = Object.create(null);
@@ -86,6 +175,9 @@
     else
       return evaluate(args[2], env);
   };
+  specialForms['if'].compiledJS = function(args, env){
+    compiledJS += "if";
+  };
   
   specialForms["while"] = function(args, env) {
     if (args.length != 2)
@@ -96,6 +188,9 @@
   
     return false;
   };
+  specialForms['while'].compiledJS = function(args, env){
+    compiledJS += "while";
+  };
   
   specialForms["do"] = function(args, env) {
     var value = false;
@@ -104,6 +199,9 @@
     });
     return value;
   };
+  specialForms['do'].compiledJS = function(args, env){
+    compiledJS += "do";
+  };
   
   specialForms["define"] = function(args, env) {
     if (args.length != 2 || args[0].type != "word")
@@ -111,6 +209,9 @@
     var value = evaluate(args[1], env);
     env[args[0].name] = value;
     return value;
+  };
+  specialForms['define'].compiledJS = function(args, env){
+    compiledJS += "define";
   };
   
   specialForms["fun"] = function(args, env) {
@@ -133,6 +234,9 @@
       return evaluate(body, localEnv);
     };
   };
+  specialForms['fun'].compiledJS = function(args, env){
+    compiledJS += "fun";
+  };
   
   specialForms["set"] = function(args, env) {
     if (args.length != 2 || args[0].type != "word")
@@ -148,6 +252,9 @@
     }
     throw new ReferenceError("Setting undefined variable " + varName);
   };
+  specialForms['set'].compiledJS = function(args, env){
+    compiledJS += "set";
+  };
   
   ////////////////////////////////////////////////////////
   
@@ -155,6 +262,8 @@
 
   topEnv["true"] = true;
   topEnv["false"] = false;
+  
+  //prefix notation
   
   ["+", "-", "*", "/", "<", ">"].forEach(function(op) {
     topEnv[op] = new Function("a, b", "return a " + op + " b;");
@@ -178,20 +287,12 @@
     console.log(value);
     return value;
   };
- 
-  ////////////////////////////////////////////////////////
- 
-  function run() {
-    var env = Object.create(topEnv);
-    var program = Array.prototype.slice
-      .call(arguments, 0).join("\n");
-    return evaluate(parse(program), env);
-  }    
-  
+
   ////////////////////////////////////////////////////////
   
   lexalia.parse = parse;
   lexalia.run = run;
+  lexalia.js = js;
   
   ////////////////////////////////////////////////////////
   
