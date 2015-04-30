@@ -78,6 +78,7 @@
   ////////////////////////////////////////////////////////
   
   var specialForms = Object.create(null);
+  
   specialForms["if"] = function(args, env) {
     if (args.length != 3)
       throw new SyntaxError("Bad number of args to if");
@@ -87,6 +88,7 @@
     else
       return evaluate(args[2], env);
   };
+  
   specialForms["while"] = function(args, env) {
     if (args.length != 2)
       throw new SyntaxError("Bad number of args to while");
@@ -94,8 +96,6 @@
     while (evaluate(args[0], env) !== false)
       evaluate(args[1], env);
   
-    // Since undefined does not exist in Egg, we return false,
-    // for lack of a meaningful result.
     return false;
   };
   
@@ -162,7 +162,6 @@
     topEnv[op] = new Function("a, b", "return a " + op + " b;");
   });
   
-  
   topEnv["array"] = function() {
     return Array.prototype.slice.call(arguments, 0);
   };
@@ -189,14 +188,15 @@
     return evaluate(parse(program), env);
   }    
   
-  
-  
   ////////////////////////////////////////////////////////
   
   lexalia.parse = parse;
   lexalia.run = run;
+  
   ////////////////////////////////////////////////////////
+  
   var root = this;
+  
   if (typeof exports !== 'undefined') {
     if (typeof module !== 'undefined' && module.exports) {
       exports = module.exports = lexalia;
