@@ -59,13 +59,11 @@
         if (expr.name in env)
           return env[expr.name];
         else
-          throw new ReferenceError("Undefined variable: " +
-                                   expr.name);
+          throw new ReferenceError("Undefined variable: " + expr.name);
       case "apply":
         if (expr.operator.type == "word" &&
             expr.operator.name in specialForms)
-          return specialForms[expr.operator.name](expr.args,
-                                                  env);
+          return specialForms[expr.operator.name](expr.args, env);
         var op = evaluate(expr.operator, env);
         if (typeof op != "function")
           throw new TypeError("Applying a non-function.");
@@ -158,9 +156,11 @@
   topEnv["true"] = true;
   topEnv["false"] = false;
   
-  ["+", "-", "*", "/", "==", "<", ">"].forEach(function(op) {
+  ["+", "-", "*", "/", "<", ">"].forEach(function(op) {
     topEnv[op] = new Function("a, b", "return a " + op + " b;");
   });
+  
+  topEnv["=="] = new Function("a, b", "return a === b;");
   
   topEnv["array"] = function() {
     return Array.prototype.slice.call(arguments, 0);
