@@ -1,0 +1,23 @@
+{
+  "name": "lexalia",
+  "version": "1.0.0",
+  "main": "lexaliaparser.js",
+  "dependencies": {
+    "escodegen": "^1.6.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucaswadedavis/lexalia.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lucaswadedavis/lexalia/issues"
+  },
+  "homepage": "https://github.com/lucaswadedavis/lexalia",
+  "description": ""
+}
