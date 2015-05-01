@@ -4,16 +4,17 @@
   
   function parseExpression(program) {
     program = skipSpace(program);
-    var match, expr;
-    if (match = /^"([^"]*)"/.exec(program))
+    var match, expr, esExpr;
+    if (match = /^"([^"]*)"/.exec(program)){
       expr = {type: "value", value: match[1]};
-    else if (match = /^\d+\b/.exec(program))
+      esExpr = {type : "Literal", value: match[1]};
+    } else if (match = /^\d+\b/.exec(program)){
       expr = {type: "value", value: Number(match[0])};
-    else if (match = /^[^\s(),"]+/.exec(program))
+    } else if (match = /^[^\s(),"]+/.exec(program)){
       expr = {type: "word", name: match[0]};
-    else
+    } else {
       throw new SyntaxError("Unexpected syntax: " + program);
-  
+    }
     return parseApply(expr, program.slice(match[0].length));
   }
 
@@ -42,6 +43,7 @@
   }
   
   ////////////////////////////////////////////////////////
+  
   
   function parse(program) {
     var result = parseExpression(program);
@@ -78,37 +80,6 @@
     }
   }
 
-  function compile(expr, env) {
-    switch(expr.type) {
-      case "value":
-        //console.log(expr.value);
-        compiledJS += JSON.stringify(expr.value);
-        return expr.value;
-      case "word":
-        if (expr.name in env){
-          //console.log(expr.name)
-          compiledJS += JSON.stringify(expr.name);
-          return env[expr.name];
-        } else {
-          throw new ReferenceError("Undefined variable: " + expr.name);
-        }
-      case "apply":
-        if (expr.operator.type == "word" &&
-            expr.operator.name in specialForms){
-          //console.log(specialForms[expr.operator.name](expr.args, env));
-          compiledJS += specialForms[expr.operator.name].compiledJS(expr.args,env);
-          return specialForms[expr.operator.name](expr.args, env);
-          }
-        var op = evaluate(expr.operator, env);
-        if (typeof op != "function")
-          throw new TypeError("Applying a non-function.");
-        return op.apply(null, expr.args.map(function(arg) {
-          //console.log(evaluate(arg,env));
-          return evaluate(arg, env);
-        }));
-    }
-  }
- 
   ////////////////////////////////////////////////////////
  
   function run() {
@@ -120,48 +91,6 @@
   
   ////////////////////////////////////////////////////////
 
-  function js() {
-    var JS = "";
-    var env = Object.create(topEnv);
-    var program = Array.prototype.slice
-      .call(arguments, 0).join("\n");
-    //this next bit will change
-    var walk = function(node){
-      //base case 
-      if (!node.hasOwnProperty("args") ){
-        return;
-      }
-      
-      
-      if (node.hasOwnProperty("type") ){
-        if (node.type === "apply"){
-          //it's a function with arguments and stuff - recursion here
-          JS += node.operator.name;
-          JS += " ( ";
-          for (var i=0;i<node.args.length;i++){
-            //recurse
-            walk(node.args[i]);
-          }
-          JS += " ); \n";
-        } else if (node.type === "word"){
-          //it's a variable
-          JS += node.name;
-        } else if (node.type === "value"){
-          //it's a primitive
-          JS += node.value;
-        }
-      } else {
-        //some error
-        console.log("node has no property type");
-      }
-    };
-    
-    console.log(parse(program));
-    for (var key in env){JS += "var " + key + " = " + env[key] + ";\n";}
-    walk(parse(program));
-    return JS;
-  }    
-  
   ////////////////////////////////////////////////////////
   
   var specialForms = Object.create(null);
@@ -284,7 +213,7 @@
   };
   
   topEnv["print"] = function(value) {
-    console.log(value);
+    //console.log(value);
     return value;
   };
 
@@ -292,8 +221,7 @@
   
   lexalia.parse = parse;
   lexalia.run = run;
-  lexalia.js = js;
-  
+
   ////////////////////////////////////////////////////////
   
   var root = this;

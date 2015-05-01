@@ -18,11 +18,6 @@ describe('escodegen.generate()', function () {
     expect(escodegen.generate(ast)).to.equal('40 + 2');
   });
 
-  it('does something else', function () {
-    expect(true).to.equal(false);
-  });
-
-  // Add more assertions here
 });
 
 describe('lexalia.parse()', function () {
@@ -47,6 +42,8 @@ describe('lexalia.parse()', function () {
   });
 
   it('returns a js string when passed the ast to escodegen',function(){
+    console.log(lexalia.parse(prog));
+    
     expect(escodegen.generate(lexalia.parse(prog))).to.be.a('string');
   });
   
