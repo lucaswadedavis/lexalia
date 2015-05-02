@@ -12,5 +12,5 @@ var lexalia = require('./lexaliaparser.js');
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', function(data) {
-  process.stdout.write( JSON.stringify(lexalia.run(data)) );
+  process.stdout.write( JSON.stringify(lexalia.run(data))+"\n" );
 });

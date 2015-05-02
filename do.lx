@@ -1,0 +1,4 @@
+do  (
+    define(log, "hello world!"),
+    print(log)
+    )
